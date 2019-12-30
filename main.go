@@ -40,9 +40,7 @@ func compareHash(str string, inputHash string) bool{
 	return false;
 }
 
-func perm(wg *sync.WaitGroup, a []string, size int) bool{
-
-	defer wg.Done();
+func perm(a []string, size int) bool{
 	if size==1 {
 		if strings.Join(a,"") == "abc123"{
 			fmt.Println("Hell yeah")
@@ -55,8 +53,7 @@ func perm(wg *sync.WaitGroup, a []string, size int) bool{
 		return false;
 	}
 	for i:=0; i<size; i++ {
-		wg.Add(1)
-		perm(wg, a, size-1)
+		perm(a, size-1)
 		if size%2==1 {
 			a[0],a[size-1]=a[size-1],a[0]
 		} else{
@@ -75,11 +72,8 @@ func main() {
 	subset(numbers, data, n, r, 0, 0)
 	// fmt.Println(res)
 	// Worker group
-	var wg sync.WaitGroup
 	for i:=0;i<len(res);i++{
-		wg.Add(1)
-		go perm(&wg, res[i],len(res[i]))
+		perm(res[i],len(res[i]))
 	}	
-	wg.Wait()
 	fmt.Println("Main done")
 }
