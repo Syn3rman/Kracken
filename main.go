@@ -2,78 +2,47 @@ package main
 
 import (
 	"fmt"
-	// "time"
-	"strings"
-	// "reflect"
+	"os"
 	"crypto/md5"
 	"encoding/hex"
-	"sync"
+	// "time"
+	// "reflect"
 )
 
-var res [][]string
+// MAXCOUNT -> Max number of goroutines
+const MAXCOUNT = 1000000
+var sem = make(chan int, MAXCOUNT)
 
-func subset(numbers, data []string, n, r, index, i int){
-	if index==r{
-		temp:=make([]string, r, r)
-		for j:=0;j<r;j++{
-			temp=append(temp,data[j])
-		}
-		temp = temp[r:]
-		res=append(res, temp)
-		return;
-	}
-	if i>=n{
-		return;
-	}
-	data[index] = numbers[i]
-	subset(numbers, data, n, r, index+1, i+1)
-	subset(numbers, data, n, r, index, i+1)
-}
-
-func compareHash(str string, inputHash string) bool{
+func compareHash(str string, inputHash string){
 	hash := md5.Sum([]byte(str))
 	calcHash := string(hex.EncodeToString(hash[:])[:])
-	fmt.Println("Checking ", str, "against ", inputHash)   
+	fmt.Println("Checking md5(", str, ")against ", inputHash)   
 	if calcHash == inputHash{
-		return true;
+		fmt.Println("--------------------MATCH FOUND--------------------------------", str)
+		os.Exit(0);
+		// return true;
 	}
-	return false;
+	<-sem
 }
 
-func perm(a []string, size int) bool{
-	if size==1 {
-		if strings.Join(a,"") == "abc123"{
-			fmt.Println("Hell yeah")
-		}
-		// fmt.Println(strings.Join(a,""))
-		if compareHash(strings.Join(a,""), "9CDFB439C7876E703E307864C9167A15"){
-			fmt.Println("--------------------MATCH FOUND--------------------------------")
-			return true;
-		}
-		return false;
+func allStr(s []string, prefix string, n,k int){
+	if k==0{
+		sem <- 1
+		go compareHash(prefix, "26e9262dceb7a2c4e1dfc417b5234370")
+		return;
 	}
-	for i:=0; i<size; i++ {
-		perm(a, size-1)
-		if size%2==1 {
-			a[0],a[size-1]=a[size-1],a[0]
-		} else{
-			a[i],a[size-1]=a[size-1],a[i]
-		}
+	for i:=0;i<n;i++{
+		newPrefix := prefix + s[i]
+		allStr(s, newPrefix, n, k-1)
 	}
-	return false
 }
 
 func main() {
-	// numbers:=[]string{'a','b','d','e','f','g','h'}
-	numbers:=[]string{"@", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "1","2","3","4","5","6","7","8","9","0","#"}
-	// numbers := []int{1,2,3,4,5}
-	r,n:=6,len(numbers)
-	data:=make([]string,r)
-	subset(numbers, data, n, r, 0, 0)
-	// fmt.Println(res)
-	// Worker group
-	for i:=0;i<len(res);i++{
-		perm(res[i],len(res[i]))
-	}	
-	fmt.Println("Main done")
+	// chars:=[]string{"a","b","c","d","e","1","2","3","4"}
+	chars:=[]string{
+		/*"@", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+		*/"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", 
+		"1","2","3","4","5","6","7","8","9","0" }
+	k,n:=7,len(chars)
+	allStr(chars,"" , n, k)
 }
